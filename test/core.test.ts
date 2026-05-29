@@ -9,6 +9,7 @@ import { parseVisionResponse } from "../src/core/parseVisionResponse.js";
 import { loadConfig } from "../src/config/loadConfig.js";
 import { analyzeImage } from "../src/core/analyzeImage.js";
 import type { LoadedConfig } from "../src/config/loadConfig.js";
+import { saveProviderSettings } from "../src/db/secrets.js";
 
 let tmpDir: string;
 
@@ -52,17 +53,21 @@ describe("provider response parsing", () => {
 });
 
 describe("config loading", () => {
-  it("applies environment over config file and cli over environment", () => {
+  it("loads provider settings from local sqlite", () => {
     const configPath = path.join(tmpDir, "config.json");
+    const dbPath = path.join(tmpDir, "imgx.db");
     fs.writeFileSync(configPath, JSON.stringify({
-      provider: { type: "openai-compatible", baseURL: "https://file.example/v1", model: "file-model", apiKeyEnv: "FILE_KEY" }
+      provider: { type: "openai-compatible", baseURL: "https://file.example/v1", model: "file-model" },
+      database: { path: dbPath }
     }));
-    const loaded = loadConfig({ config: configPath, model: "cli-model" }, {
-      IMGX_BASE_URL: "https://env.example/v1",
-      FILE_KEY: "sk-test"
-    } as NodeJS.ProcessEnv);
-    expect(loaded.config.provider.baseURL).toBe("https://env.example/v1");
-    expect(loaded.config.provider.model).toBe("cli-model");
+    saveProviderSettings(dbPath, {
+      baseURL: "https://sqlite.example/v1",
+      model: "sqlite-model",
+      apiKey: "sk-test"
+    });
+    const loaded = loadConfig({ config: configPath });
+    expect(loaded.config.provider.baseURL).toBe("https://sqlite.example/v1");
+    expect(loaded.config.provider.model).toBe("sqlite-model");
     expect(loaded.apiKey).toBe("sk-test");
   });
 });
@@ -101,8 +106,7 @@ describe("analyzeImage", () => {
         provider: {
           type: "openai-compatible",
           baseURL: `http://127.0.0.1:${address.port}/v1`,
-          model: "mock-vision",
-          apiKeyEnv: "IMGX_API_KEY"
+          model: "mock-vision"
         },
         image: {
           maxSizeMB: 20,
@@ -128,4 +132,3 @@ describe("analyzeImage", () => {
     server.close();
   });
 });
-

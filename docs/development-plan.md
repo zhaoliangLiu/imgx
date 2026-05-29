@@ -5,7 +5,7 @@
 - V0.1 should optimize for a working CLI core, not proxy mode.
 - Provider support is limited to OpenAI-compatible Chat Completions with image URL content.
 - Local files are the only default image source.
-- API keys are provided through environment variables, not stored directly in config files.
+- Provider settings are saved locally through `imgx set`; API keys are stored in SQLite, not config files.
 - SQLite is the source of truth for history, cache metadata, and batch state.
 
 ## Success Criteria
@@ -33,7 +33,7 @@ Verify:
 Implementation:
 
 - Add config schema with `zod`.
-- Load config from defaults, user config, project config, environment, and CLI overrides.
+- Load config from defaults, user config, project config, local SQLite settings, and CLI overrides.
 - Implement `init`.
 - Add `ImgxError`, error codes, and exit code mapping.
 - Add redaction utilities for API keys, Authorization headers, and base64 payloads.
@@ -41,7 +41,7 @@ Implementation:
 Verify:
 
 - Unit tests cover config precedence.
-- `imgx init --base-url ... --model ... --api-key-env ...` creates config.
+- `imgx set --base-url ... --model ... --api-key ...` saves provider settings.
 - Missing API key returns `CONFIG_MISSING_API_KEY` and exit code `3`.
 - Invalid image path returns `IMAGE_FILE_NOT_FOUND` and exit code `4`.
 
@@ -183,4 +183,3 @@ Verify:
 - Plugin-style providers.
 - Local VLM backend.
 - Generative image editing backend.
-

@@ -48,16 +48,13 @@ V0.1 excludes:
 
 ## Configuration
 
-Support environment variables:
+Support local SQLite provider settings via `imgx set`:
 
 ```bash
-IMGX_BASE_URL="https://api.example.com/v1"
-IMGX_MODEL="gpt-4o-mini"
-IMGX_API_KEY="sk-xxx"
-IMGX_DB_PATH="$HOME/.imgx/imgx.db"
-IMGX_CACHE_DIR="$HOME/.imgx/cache"
-IMGX_TIMEOUT_MS=120000
-IMGX_MAX_IMAGE_MB=20
+imgx set \
+  --base-url https://api.example.com/v1 \
+  --model gpt-4o-mini \
+  --api-key sk-xxx
 ```
 
 Support config files:
@@ -70,17 +67,17 @@ Support config files:
 Precedence:
 
 ```text
-CLI options > environment variables > project config > user config > defaults
+CLI options > local SQLite settings > project config > user config > defaults
 ```
 
-Do not write plaintext API keys to config. Store `apiKeyEnv` instead.
+Do not write plaintext API keys to config. Store the provider API key only in local SQLite via `imgx set`.
 
 ## Command Acceptance Criteria
 
 ### `init`
 
 - Creates `~/.config/imgx/config.json`.
-- Supports non-interactive arguments: `--base-url`, `--model`, `--api-key-env`.
+- Supports non-interactive arguments: `--base-url`, `--model`.
 - Creates the SQLite database.
 - Creates the cache directory.
 - Does not persist plaintext API keys.
@@ -236,4 +233,3 @@ Required exit codes:
 - Standard error cases return the expected error code and non-zero exit code.
 - Unit tests cover config loading, error mapping, cache key generation, and response parsing.
 - Integration tests cover at least one mocked provider flow for `describe`, `ocr`, `ask`, and `batch`.
-

@@ -3,6 +3,7 @@ import { Command } from "commander";
 import { loadConfig, requireProviderConfig } from "../../config/loadConfig.js";
 import { openDb } from "../../db/client.js";
 import { writeJson } from "../../output/json.js";
+import { defaultCacheDir } from "../../utils/paths.js";
 import sharp from "sharp";
 import { toDataUrl } from "../../image/dataUrl.js";
 import { callOpenAICompatibleVision } from "../../providers/openaiCompatibleVision.js";
@@ -10,7 +11,7 @@ import { parseVisionResponse } from "../../core/parseVisionResponse.js";
 
 export function doctorCommand(version: string): Command {
   return new Command("doctor")
-    .description("Check environment and provider connectivity")
+    .description("Check local state and provider connectivity")
     .option("--json", "Output JSON")
     .action(async (options, command) => {
       const merged = command.optsWithGlobals();
@@ -28,12 +29,12 @@ export function doctorCommand(version: string): Command {
       }
       try {
         const provider = requireProviderConfig(loaded);
-        checks.push({ name: "api_key", ok: true, source: loaded.config.provider.apiKeyEnv });
+        checks.push({ name: "api_key", ok: true, source: "local_sqlite" });
         checks.push({ name: "provider_config", ok: true, baseURL: provider.baseURL, model: provider.model });
         const png = await sharp({
           create: {
-            width: 1,
-            height: 1,
+            width: 32,
+            height: 32,
             channels: 3,
             background: { r: 255, g: 255, b: 255 }
           }
@@ -52,7 +53,7 @@ export function doctorCommand(version: string): Command {
       } catch (error) {
         checks.push({ name: "provider_test", ok: false, message: error instanceof Error ? error.message : String(error) });
       }
-      const cacheDir = process.env.IMGX_CACHE_DIR ?? `${process.env.HOME}/.imgx/cache`;
+      const cacheDir = defaultCacheDir();
       try {
         fs.mkdirSync(cacheDir, { recursive: true });
         fs.accessSync(cacheDir, fs.constants.W_OK);

@@ -46,18 +46,14 @@ npx imgx-bridge --help
 ```bash
 npm install -g imgx-bridge
 
-export IMGX_API_KEY="sk-xxx"
-
-imgx init \
+imgx set \
   --base-url https://api.example.com/v1 \
   --model gpt-4o-mini \
-  --api-key-env IMGX_API_KEY
+  --api-key sk-xxx
 
 imgx doctor
 
-imgx describe ./screenshot.png
-
-imgx ask ./screenshot.png "这张截图里的报错是什么？"
+imgx ./screenshot.png "这张截图里的报错是什么？"
 
 imgx ocr ./paper.png --json
 
@@ -85,6 +81,8 @@ Commands:
   batch <pattern>              Run task on multiple images
   history                      Show analysis history
   cache                        Manage cache
+  set                          Save provider settings to local SQLite
+  unset                        Delete saved local settings
   proxy                        Start OpenAI-compatible proxy server
 
 Global Options:
@@ -139,17 +137,20 @@ V0.1 must support:
 
 ## Configuration
 
-Environment variables:
+Use `imgx set` once after installation. Provider settings are stored in local SQLite, including the API key. The JSON config file is kept for non-secret defaults and backward compatibility.
 
 ```bash
-IMGX_BASE_URL="https://api.example.com/v1"
-IMGX_MODEL="gpt-4o-mini"
-IMGX_API_KEY="sk-xxx"
+imgx set \
+  --base-url https://api.example.com/v1 \
+  --model gpt-4o-mini \
+  --api-key sk-xxx
+```
 
-IMGX_DB_PATH="$HOME/.imgx/imgx.db"
-IMGX_CACHE_DIR="$HOME/.imgx/cache"
-IMGX_TIMEOUT_MS=120000
-IMGX_MAX_IMAGE_MB=20
+Delete saved credentials:
+
+```bash
+imgx unset api-key
+imgx unset provider
 ```
 
 Config file locations:
@@ -162,7 +163,7 @@ Project: ./imgx.config.json
 Config precedence:
 
 ```text
-CLI options > environment variables > project config > user config > defaults
+CLI options > local SQLite settings > project config > user config > defaults
 ```
 
 Example:
@@ -172,8 +173,7 @@ Example:
   "provider": {
     "type": "openai-compatible",
     "baseURL": "https://api.example.com/v1",
-    "model": "gpt-4o-mini",
-    "apiKeyEnv": "IMGX_API_KEY"
+    "model": "gpt-4o-mini"
   },
   "image": {
     "maxSizeMB": 20,
@@ -207,8 +207,7 @@ imgx init
 
 imgx init \
   --base-url https://api.example.com/v1 \
-  --model gpt-4o-mini \
-  --api-key-env IMGX_API_KEY
+  --model gpt-4o-mini
 ```
 
 Acceptance criteria:
@@ -244,6 +243,7 @@ Asks a question about an image.
 
 ```bash
 imgx ask ./error.png "这张截图报错是什么？"
+imgx ./error.png "这张截图报错是什么？"
 ```
 
 Options:
@@ -515,6 +515,7 @@ Exit codes:
 - `--debug` includes debug details with secrets redacted.
 - `--json` ensures stdout contains only JSON.
 - API keys, Authorization headers, and image base64 are never logged.
+- Saved API keys are stored only in the local SQLite database and can be removed with `imgx unset api-key`.
 - Local files are read only when explicitly passed by the user.
 - URL images require explicit `--allow-url`.
 - EXIF is stripped by default.
@@ -569,7 +570,7 @@ V0.4:
 ## V0.1 Acceptance
 
 - `npm install -g imgx-bridge` makes `imgx --help` available.
-- `imgx init` generates config without storing plaintext API keys.
+- `imgx set` saves provider settings locally.
 - `imgx doctor` completes provider checks.
 - `imgx describe ./a.png` returns an image description.
 - `imgx ocr ./a.png` returns OCR text.

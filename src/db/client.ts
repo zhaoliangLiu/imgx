@@ -71,6 +71,16 @@ CREATE TABLE IF NOT EXISTS batch_items (
 CREATE TABLE IF NOT EXISTS migrations (
   version INTEGER PRIMARY KEY,
   applied_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS secrets (
+  name TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS settings (
+  name TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TEXT NOT NULL
 );`;
 
 export type DbClient = Database.Database;

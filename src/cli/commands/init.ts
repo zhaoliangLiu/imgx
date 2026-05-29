@@ -8,9 +8,6 @@ import { writeJson } from "../../output/json.js";
 export function initCommand(): Command {
   return new Command("init")
     .description("Initialize imgx config")
-    .option("--base-url <url>", "OpenAI-compatible base URL")
-    .option("--model <model>", "Vision model name")
-    .option("--api-key-env <name>", "Environment variable that stores the API key", "IMGX_API_KEY")
     .option("--json", "Output JSON")
     .action((options, command) => {
       const merged = command.optsWithGlobals();
@@ -20,12 +17,6 @@ export function initCommand(): Command {
       const cacheDir = defaultCacheDir();
       fs.mkdirSync(cacheDir, { recursive: true });
       const config = {
-        provider: {
-          type: "openai-compatible",
-          baseURL: merged.baseUrl,
-          model: merged.model,
-          apiKeyEnv: merged.apiKeyEnv
-        },
         database: { path: dbPath },
         cache: { enabled: true, ttlDays: 30 }
       };

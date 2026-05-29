@@ -22,10 +22,8 @@ export function loadForCommand(options: GlobalOptions & Record<string, unknown>)
       config: options.config,
       baseURL: typeof options.baseUrl === "string" ? options.baseUrl : undefined,
       model: typeof options.model === "string" ? options.model : undefined,
-      apiKeyEnv: typeof options.apiKeyEnv === "string" ? options.apiKeyEnv : undefined,
       timeoutMs: options.timeout ? Number(options.timeout) : undefined
     }),
     logger: new Logger(logLevel(options))
   };
 }
-

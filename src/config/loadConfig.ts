@@ -1,9 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ConfigSchema, type CliConfigOverrides, type ImgxConfig } from "./schema.js";
-import { readEnv } from "./env.js";
 import { expandHome, projectConfigPath, userConfigPath } from "../utils/paths.js";
 import { ImgxError } from "../errors/ImgxError.js";
+import { readProviderSettings } from "../db/secrets.js";
 
 export type LoadedConfig = {
   config: ImgxConfig;
@@ -31,29 +31,30 @@ function mergeConfig(...values: Record<string, unknown>[]): Record<string, unkno
   return out;
 }
 
-export function loadConfig(overrides: CliConfigOverrides = {}, env = process.env): LoadedConfig {
+export function loadConfig(overrides: CliConfigOverrides = {}): LoadedConfig {
   const explicitConfigPath = overrides.config ? path.resolve(overrides.config) : undefined;
   const userPath = userConfigPath();
   const projectPath = projectConfigPath();
   const userConfig = readJsonIfExists(userPath);
   const projectConfig = explicitConfigPath ? readJsonIfExists(explicitConfigPath) : readJsonIfExists(projectPath);
-  const envConfig = readEnv(env);
   const cliConfig: Record<string, unknown> = {};
 
-  if (overrides.baseURL || overrides.model || overrides.apiKeyEnv) {
+  if (overrides.baseURL || overrides.model) {
     cliConfig.provider = {
       baseURL: overrides.baseURL,
-      model: overrides.model,
-      apiKeyEnv: overrides.apiKeyEnv
+      model: overrides.model
     };
   }
   if (overrides.dbPath) cliConfig.database = { path: overrides.dbPath };
   if (overrides.maxImageMB) cliConfig.image = { maxSizeMB: overrides.maxImageMB };
 
-  const parsed = ConfigSchema.parse(mergeConfig(userConfig, projectConfig, envConfig, cliConfig));
+  const parsed = ConfigSchema.parse(mergeConfig(userConfig, projectConfig, cliConfig));
   parsed.database.path = expandHome(parsed.database.path);
-  const apiKey = env[parsed.provider.apiKeyEnv];
-  const timeoutMs = overrides.timeoutMs ?? Number(env.IMGX_TIMEOUT_MS ?? 120000);
+  const stored = readProviderSettings(parsed.database.path);
+  if (stored.baseURL) parsed.provider.baseURL = stored.baseURL;
+  if (stored.model) parsed.provider.model = stored.model;
+  const apiKey = stored.apiKey;
+  const timeoutMs = overrides.timeoutMs ?? 120000;
 
   return {
     config: parsed,
@@ -67,19 +68,18 @@ export function requireProviderConfig(loaded: LoadedConfig): { baseURL: string; 
   const { config, apiKey } = loaded;
   if (!config.provider.baseURL) {
     throw new ImgxError("CONFIG_INVALID_BASE_URL", "Provider baseURL is missing.", {
-      hint: "Run imgx init or set IMGX_BASE_URL."
+      hint: "Run imgx set --base-url ... --model ... --api-key ..."
     });
   }
   if (!config.provider.model) {
     throw new ImgxError("CONFIG_MODEL_MISSING", "Provider model is missing.", {
-      hint: "Run imgx init or set IMGX_MODEL."
+      hint: "Run imgx set --base-url ... --model ... --api-key ..."
     });
   }
   if (!apiKey) {
-    throw new ImgxError("CONFIG_MISSING_API_KEY", `API key is missing from ${config.provider.apiKeyEnv}.`, {
-      hint: `Export ${config.provider.apiKeyEnv}=... before running imgx.`
+    throw new ImgxError("CONFIG_MISSING_API_KEY", "Provider API key is missing from local SQLite.", {
+      hint: "Run imgx set --api-key ... before running imgx."
     });
   }
   return { baseURL: config.provider.baseURL, model: config.provider.model, apiKey };
 }
-

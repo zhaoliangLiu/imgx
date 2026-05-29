@@ -5,8 +5,13 @@ import { doctorCommand } from "./commands/doctor.js";
 import { historyCommand } from "./commands/history.js";
 import { cacheCommand } from "./commands/cache.js";
 import { batchCommand } from "./commands/batch.js";
+import { setCommand, unsetCommand } from "./commands/set.js";
 import { errorJson, writeJson } from "../output/json.js";
+import { analyzeImage } from "../core/analyzeImage.js";
+import { resultToText } from "../output/text.js";
+import { loadForCommand } from "./shared.js";
 import { toImgxError } from "../errors/ImgxError.js";
+import { ImgxError } from "../errors/ImgxError.js";
 import { exitCodeFor } from "../errors/exitCodes.js";
 
 const VERSION = "0.1.0";
@@ -22,6 +27,29 @@ program
   .option("--verbose", "Show more logs")
   .option("--debug", "Show debug logs with secrets redacted");
 
+program
+  .argument("[image]", "Image path for shorthand ask")
+  .argument("[question...]", "Question for shorthand ask")
+  .action(async (image: string | undefined, questionParts: string[] | undefined, options, command) => {
+    if (!image) {
+      command.help();
+      return;
+    }
+    const question = questionParts?.join(" ").trim();
+    if (!question) {
+      throw new ImgxError("ARGUMENT_ERROR", "Missing question.", { hint: "Usage: imgx <image> <question>" });
+    }
+    const merged = command.optsWithGlobals();
+    const { loaded } = loadForCommand(merged);
+    const result = await analyzeImage(loaded, {
+      imagePath: image,
+      task: "general",
+      question,
+      json: Boolean(merged.json)
+    });
+    merged.json ? writeJson(result) : process.stdout.write(`${resultToText(result)}\n`);
+  });
+
 program.addCommand(initCommand());
 program.addCommand(doctorCommand(VERSION));
 program.addCommand(askCommand());
@@ -30,6 +58,8 @@ program.addCommand(ocrCommand());
 program.addCommand(batchCommand());
 program.addCommand(historyCommand());
 program.addCommand(cacheCommand());
+program.addCommand(setCommand());
+program.addCommand(unsetCommand());
 
 program
   .command("config")

@@ -4,9 +4,8 @@ export const ConfigSchema = z.object({
   provider: z.object({
     type: z.literal("openai-compatible").default("openai-compatible"),
     baseURL: z.string().url().optional(),
-    model: z.string().min(1).optional(),
-    apiKeyEnv: z.string().min(1).default("IMGX_API_KEY")
-  }).default({ type: "openai-compatible", apiKeyEnv: "IMGX_API_KEY" }),
+    model: z.string().min(1).optional()
+  }).default({ type: "openai-compatible" }),
   image: z.object({
     maxSizeMB: z.number().positive().default(20),
     autoResize: z.boolean().default(true),
@@ -33,9 +32,7 @@ export type CliConfigOverrides = {
   config?: string;
   baseURL?: string;
   model?: string;
-  apiKeyEnv?: string;
   dbPath?: string;
   timeoutMs?: number;
   maxImageMB?: number;
 };
-
