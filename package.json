@@ -16,6 +16,7 @@
     "build": "tsup src/cli/index.ts --format esm --dts --clean --out-dir dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "prepare": "npm run build",
     "prepack": "npm run build"
   },
   "keywords": [
