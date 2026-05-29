@@ -1,0 +1,59 @@
+{
+  "name": "imgx-bridge",
+  "version": "0.1.0",
+  "description": "A CLI image bridge for text-only LLMs.",
+  "type": "module",
+  "bin": {
+    "imgx": "./bin/imgx.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/cli/index.ts --format esm --dts --clean --out-dir dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "cli",
+    "image",
+    "ocr",
+    "vision",
+    "llm",
+    "openai-compatible",
+    "sqlite"
+  ],
+  "author": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zhaoliangLiu/imgx.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zhaoliangLiu/imgx/issues"
+  },
+  "homepage": "https://github.com/zhaoliangLiu/imgx#readme",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.9.1",
+    "commander": "^13.1.0",
+    "fast-glob": "^3.3.3",
+    "nanoid": "^5.1.5",
+    "sharp": "^0.33.5",
+    "undici": "^7.3.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.13.9",
+    "tsup": "^8.4.0",
+    "typescript": "^5.8.2",
+    "vitest": "^3.0.8"
+  }
+}
